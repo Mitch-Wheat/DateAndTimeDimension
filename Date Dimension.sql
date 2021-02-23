@@ -11,7 +11,7 @@ BEGIN
 END
 GO
 
-declare @baseDate char(8) = '19000101';  -- also used as the 'Unknown date'
+declare @baseDate char(8) = '19000101';  -- also used as the 'Unknown date': if your dates start earlier than this pick abother date (1753-01-01 maybe)
 declare @startDate date   = '2000-01-01' -- Min. transaction date ?
 declare @endDate date     = '2040-12-31'
 
@@ -192,53 +192,53 @@ CREATE TABLE DimDate
 (
 	SELECT DATEADD(day, i, '17530101') AS d FROM sequence
 )
---INSERT DimDate
---(
---    DateKey, 
---    DateValue,
---    DateLabelUS,
---    DateLabelUK,
---    DateLabelISO,
---    [DayName], 
---    DayShortName, 
---    [MonthName], 
---    MonthShortName, 
---    [DayOfYear],
---    [DayOfMonth],
---    [DayOfWeek],
---    WeekInMonth, 
---    WeekendFlag,
---    TodayFlag, 
---    DayIsLastOfMonth,
---    IsHolidayUS,
---    ISOWeekNumber,
+INSERT DimDate
+(
+    DateKey, 
+    DateValue,
+    DateLabelUS,
+    DateLabelUK,
+    DateLabelISO,
+    [DayName], 
+    DayShortName, 
+    [MonthName], 
+    MonthShortName, 
+    [DayOfYear],
+    [DayOfMonth],
+    [DayOfWeek],
+    WeekInMonth, 
+    WeekendFlag,
+    TodayFlag, 
+    DayIsLastOfMonth,
+    IsHolidayUS,
+    ISOWeekNumber,
 
---    CalendarYear,
---    CalendarSemester, 
---    CalendarQuarter, 
---    CalendarMonth,
---    CalendarWeek,  -- This is US WeekNumberOfYear
---    CalendarYearLabel,   
---    CalendarSemesterLabel,
---    CalendarQuarterLabel,
---    CalendarMonthLabel,
---    CalendarWeekLabel,  
+    CalendarYear,
+    CalendarSemester, 
+    CalendarQuarter, 
+    CalendarMonth,
+    CalendarWeek,  -- This is US WeekNumberOfYear
+    CalendarYearLabel,   
+    CalendarSemesterLabel,
+    CalendarQuarterLabel,
+    CalendarMonthLabel,
+    CalendarWeekLabel,  
     
---    FiscalYear,
---    FiscalQuarter,
---    FiscalMonth,
---    FiscalWeek,
---    FiscalDayOfYear,
---    FiscalYearLabel,
---    FiscalQuarterLabel,
---    FiscalMonthLabel,
+    FiscalYear,
+    FiscalQuarter,
+    FiscalMonth,
+    FiscalWeek,
+    FiscalDayOfYear,
+    FiscalYearLabel,
+    FiscalQuarterLabel,
+    FiscalMonthLabel,
 
---    StartOfMonthDate,
---    EndOfMonthDate,
---    RelativeDayCount, 
---    RelativeWeekCount, 
---    RelativeMonthCount
---)
+    StartOfMonthDate,
+    EndOfMonthDate,
+    RelativeDayCount, 
+    RelativeWeekCount, 
+    RelativeMonthCount
+)
 SELECT 
 	DateKey               = YEAR(dates.d) * 10000 + MONTH(dates.d) * 100 + DAY(dates.d), 
     DateValue             = cast(dates.d as date), 
