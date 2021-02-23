@@ -15,7 +15,7 @@ declare @baseDate char(8) = '19000101';  -- also used as the 'Unknown date'
 declare @startDate date   = '2000-01-01' -- Min. transaction date ?
 declare @endDate date     = '2040-12-31'
 
-declare @FiscalYearStartMonth int = 10 -- October 1st, accounting period for the US federal government; July 1st for most states
+declare @FYStartMonth int = 10 -- October 1st, accounting period for the US federal government; July 1st for most states
 
 --declare @FiscalDates table
 --(
@@ -192,53 +192,53 @@ CREATE TABLE DimDate
 (
 	SELECT DATEADD(day, i, '17530101') AS d FROM sequence
 )
-INSERT DimDate
-(
-    DateKey, 
-    DateValue,
-    DateLabelUS,
-    DateLabelUK,
-    DateLabelISO,
-    [DayName], 
-    DayShortName, 
-    [MonthName], 
-    MonthShortName, 
-    [DayOfYear],
-    [DayOfMonth],
-    [DayOfWeek],
-    WeekInMonth, 
-    WeekendFlag,
-    TodayFlag, 
-    DayIsLastOfMonth,
-    IsHolidayUS,
-    ISOWeekNumber,
+--INSERT DimDate
+--(
+--    DateKey, 
+--    DateValue,
+--    DateLabelUS,
+--    DateLabelUK,
+--    DateLabelISO,
+--    [DayName], 
+--    DayShortName, 
+--    [MonthName], 
+--    MonthShortName, 
+--    [DayOfYear],
+--    [DayOfMonth],
+--    [DayOfWeek],
+--    WeekInMonth, 
+--    WeekendFlag,
+--    TodayFlag, 
+--    DayIsLastOfMonth,
+--    IsHolidayUS,
+--    ISOWeekNumber,
 
-    CalendarYear,
-    CalendarSemester, 
-    CalendarQuarter, 
-    CalendarMonth,
-    CalendarWeek,  -- This is US WeekNumberOfYear
-    CalendarYearLabel,   
-    CalendarSemesterLabel,
-    CalendarQuarterLabel,
-    CalendarMonthLabel,
-    CalendarWeekLabel,  
+--    CalendarYear,
+--    CalendarSemester, 
+--    CalendarQuarter, 
+--    CalendarMonth,
+--    CalendarWeek,  -- This is US WeekNumberOfYear
+--    CalendarYearLabel,   
+--    CalendarSemesterLabel,
+--    CalendarQuarterLabel,
+--    CalendarMonthLabel,
+--    CalendarWeekLabel,  
     
-    FiscalYear,
-    FiscalQuarter,
-    FiscalMonth,
-    FiscalWeek,
-    FiscalDayOfYear,
-    FiscalYearLabel,
-    FiscalQuarterLabel,
-    FiscalMonthLabel,
+--    FiscalYear,
+--    FiscalQuarter,
+--    FiscalMonth,
+--    FiscalWeek,
+--    FiscalDayOfYear,
+--    FiscalYearLabel,
+--    FiscalQuarterLabel,
+--    FiscalMonthLabel,
 
-    StartOfMonthDate,
-    EndOfMonthDate,
-    RelativeDayCount, 
-    RelativeWeekCount, 
-    RelativeMonthCount
-)
+--    StartOfMonthDate,
+--    EndOfMonthDate,
+--    RelativeDayCount, 
+--    RelativeWeekCount, 
+--    RelativeMonthCount
+--)
 SELECT 
 	DateKey               = YEAR(dates.d) * 10000 + MONTH(dates.d) * 100 + DAY(dates.d), 
     DateValue             = cast(dates.d as date), 
@@ -270,21 +270,22 @@ SELECT
     CalendarMonthLabel    = 'CY' + CAST(YEAR(dates.d) AS varchar(4)) + '-' + LEFT(DATENAME(month, dates.d), 3),
     CalendarWeekLabel     = 'CY Week' + CAST((DATEPART(dayofyear, dates.d) + 6) / 7 AS varchar(2)),
 
-    CASE WHEN MONTH(dates.d) >= @FiscalYearStartMonth THEN YEAR(dates.d) + 1 ELSE YEAR(dates.d) END AS FiscalYear,
-    (CASE WHEN MONTH(dates.d) >= @FiscalYearStartMonth THEN MONTH(dates.d) - @FiscalYearStartMonth + 1 ELSE MONTH(dates.d) + 13 - @FiscalYearStartMonth END - 1) / 3 + 1 AS FiscalQuarter,
-    CASE WHEN MONTH(dates.d) >= @FiscalYearStartMonth THEN MONTH(dates.d) - @FiscalYearStartMonth + 1 ELSE MONTH(dates.d) + 13 - @FiscalYearStartMonth END AS FiscalMonth,
-    ((CASE WHEN MONTH(dates.d) >= @FiscalYearStartMonth 
-        THEN DATEDIFF(day, CAST(CAST(YEAR(dates.d) AS varchar(4)) + RIGHT('0' + CAST(@FiscalYearStartMonth AS varchar(2)), 2) + '01' AS date), dates.d) + 1
-        ELSE DATEDIFF(day, CAST(CAST(YEAR(dates.d) - 1 AS varchar(4)) + RIGHT('0' + CAST(@FiscalYearStartMonth AS varchar(2)), 2) + '01' AS date), dates.d) + 1
+    CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN YEAR(dates.d) + 1 ELSE YEAR(dates.d) END AS FiscalYear,
+    (CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN MONTH(dates.d) - @FYStartMonth + 1 ELSE MONTH(dates.d) + 13 - @FYStartMonth END - 1) / 3 + 1 AS FiscalQuarter,
+    CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN MONTH(dates.d) - @FYStartMonth + 1 ELSE MONTH(dates.d) + 13 - @FYStartMonth END AS FiscalMonth,
+    ((CASE WHEN MONTH(dates.d) >= @FYStartMonth 
+        THEN DATEDIFF(day, DATEFROMPARTS(YEAR(dates.d), @FYStartMonth, 1), dates.d) + 1
+        ELSE DATEDIFF(day, DATEFROMPARTS(YEAR(dates.d) - 1, @FYStartMonth, 1), dates.d) + 1
     END) + 6) / 7 AS FiscalWeek,
 
-    CASE WHEN MONTH(dates.d) >= @FiscalYearStartMonth 
-        THEN DATEDIFF(day, CAST(CAST(YEAR(dates.d) AS varchar(4)) + RIGHT('0' + CAST(@FiscalYearStartMonth AS varchar(2)), 2) + '01' AS date), dates.d) + 1
-        ELSE DATEDIFF(day, CAST(CAST(YEAR(dates.d) - 1 AS varchar(4)) + RIGHT('0' + CAST(@FiscalYearStartMonth AS varchar(2)), 2) + '01' AS date), dates.d) + 1
+    CASE WHEN MONTH(dates.d) >= @FYStartMonth 
+        THEN DATEDIFF(day, DATEFROMPARTS(YEAR(dates.d), @FYStartMonth, 1), dates.d) + 1
+        ELSE DATEDIFF(day, DATEFROMPARTS(YEAR(dates.d) - 1, @FYStartMonth, 1), dates.d) + 1
     END AS FiscalDayOfYear,
-    'FY' + CAST(CASE WHEN MONTH(dates.d) >= @FiscalYearStartMonth THEN YEAR(dates.d) + 1 ELSE YEAR(dates.d) END AS varchar(4)) AS FiscalYearLabel,
-    'FY-Q' + CAST((CASE WHEN MONTH(dates.d) >= @FiscalYearStartMonth THEN MONTH(dates.d) - @FiscalYearStartMonth + 1 ELSE MONTH(dates.d) + 13 - @FiscalYearStartMonth END - 1) / 3 + 1 AS varchar(10)) AS FiscalQuarterLabel,
-    'FY' + CAST(CASE WHEN MONTH(dates.d) >= @FiscalYearStartMonth THEN YEAR(dates.d) + 1 ELSE YEAR(dates.d) END AS varchar(4)) + '-' + SUBSTRING(DATENAME(month, dates.d), 1, 3) AS FiscalMonthLabel,
+
+    'FY' + CAST(CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN YEAR(dates.d) + 1 ELSE YEAR(dates.d) END AS varchar(4)) AS FiscalYearLabel,
+    'FY-Q' + CAST((CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN MONTH(dates.d) - @FYStartMonth + 1 ELSE MONTH(dates.d) + 13 - @FYStartMonth END - 1) / 3 + 1 AS varchar(10)) AS FiscalQuarterLabel,
+    'FY' + CAST(CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN YEAR(dates.d) + 1 ELSE YEAR(dates.d) END AS varchar(4)) + '-' + SUBSTRING(DATENAME(month, dates.d), 1, 3) AS FiscalMonthLabel,
 
     cast(DATEFROMPARTS(YEAR(dates.d), MONTH(dates.d), 1) as date) AS StartOfMonthDate,
     cast(EOMONTH(dates.d) as date) AS EndOfMonthDate,
@@ -298,7 +299,7 @@ from
 where  
 	((dates.d between @startDate and @endDate)
     or dates.d = @baseDate) -- Dummy date placeholder for unknown dates.
-    
+
 order by 
     DateKey 
 
