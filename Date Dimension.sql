@@ -11,7 +11,7 @@ BEGIN
 END
 GO
 
-declare @baseDate char(8) = '19000101';  -- also used as the 'Unknown date': if your dates start earlier than this pick abother date (1753-01-01 maybe)
+declare @baseDate char(8) = '19000101';  -- also used as the 'Unknown date': if your dates start earlier than this pick another date (1753-01-01 maybe)
 declare @startDate date   = '2000-01-01' -- Min. transaction date ?
 declare @endDate date     = '2040-12-31'
 
