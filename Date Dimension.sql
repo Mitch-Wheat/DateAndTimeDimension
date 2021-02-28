@@ -151,6 +151,7 @@ CREATE TABLE DimDate
     FiscalQuarterLabel  varchar(5)  NOT NULL,
     FiscalMonthLabel    varchar(10) NOT NULL,
 
+    DaysInMonth         tinyint     NOT NULL,
     StartOfMonthDate    date        NOT NULL,
     EndOfMonthDate      date        NOT NULL,
 
@@ -233,6 +234,7 @@ INSERT DimDate
     FiscalQuarterLabel,
     FiscalMonthLabel,
 
+    DaysInMonth,
     StartOfMonthDate,
     EndOfMonthDate,
     RelativeDayCount, 
@@ -242,7 +244,7 @@ INSERT DimDate
 SELECT 
 	DateKey               = YEAR(dates.d) * 10000 + MONTH(dates.d) * 100 + DAY(dates.d), 
     DateValue             = cast(dates.d as date), 
-    DateLabelUS           = right('0' + cast(datepart(month, dates.d) as varchar(2)),2) + '-' +  right('0' + cast(datepart(day, dates.d) as varchar(2)),2) + '-' + cast(datepart(year, dates.d) as varchar(4)),   -- Date in MM-dd-yyyy format
+    DateLabelUS           = right('0' + cast(datepart(month, dates.d) as varchar(2)),2) + '-' + right('0' + cast(datepart(day, dates.d) as varchar(2)),2) + '-' + cast(datepart(year, dates.d) as varchar(4)),    -- Date in MM-dd-yyyy format
     DateLabelUK           = right('0' + cast(datepart(day, dates.d) as varchar(2)),2) + '-' + right('0' + cast(datepart(month, dates.d) as varchar(2)),2) + '-' + cast(datepart(year, dates.d) as varchar(4)),    -- Date in dd-MM-yyyy format
     DateLabelISO          = cast(datepart(year, dates.d) as varchar(4))  + '-' + right('0' + cast(datepart(month, dates.d) as varchar(2)),2) + '-' +  right('0' + cast(datepart(day, dates.d) as varchar(2)),2),  -- Date in yyyy-MM-dd format
     [DayName]             = DATENAME(weekday, dates.d),                      -- Monday
@@ -287,6 +289,7 @@ SELECT
     'FY-Q' + CAST((CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN MONTH(dates.d) - @FYStartMonth + 1 ELSE MONTH(dates.d) + 13 - @FYStartMonth END - 1) / 3 + 1 AS varchar(10)) AS FiscalQuarterLabel,
     'FY' + CAST(CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN YEAR(dates.d) + 1 ELSE YEAR(dates.d) END AS varchar(4)) + '-' + SUBSTRING(DATENAME(month, dates.d), 1, 3) AS FiscalMonthLabel,
 
+    DaysInMonth = datediff(day, cast(DATEFROMPARTS(YEAR(dates.d), MONTH(dates.d), 1) as date), cast(EOMONTH(dates.d) as date)),
     cast(DATEFROMPARTS(YEAR(dates.d), MONTH(dates.d), 1) as date) AS StartOfMonthDate,
     cast(EOMONTH(dates.d) as date) AS EndOfMonthDate,
 
