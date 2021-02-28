@@ -110,8 +110,7 @@ declare @FYStartMonth int = 10 -- October 1st, accounting period for the US fede
 
 CREATE TABLE DimDate
 (
-	DateKey             int          NOT NULL CONSTRAINT PK_DimDate_DateKey PRIMARY KEY,
-    DateValue           date         NOT NULL CONSTRAINT AKDimDate_DateValue UNIQUE,
+	DateKey             date         NOT NULL CONSTRAINT PK_DimDate_DateKey PRIMARY KEY,
     DateLabelUS         varchar(10)  NOT NULL,
     DateLabelUK         varchar(10)  NOT NULL,
     DateLabelISO        varchar(10)  NOT NULL,
@@ -196,7 +195,6 @@ CREATE TABLE DimDate
 INSERT DimDate
 (
     DateKey, 
-    DateValue,
     DateLabelUS,
     DateLabelUK,
     DateLabelISO,
@@ -242,8 +240,7 @@ INSERT DimDate
     RelativeMonthCount
 )
 SELECT 
-	DateKey               = YEAR(dates.d) * 10000 + MONTH(dates.d) * 100 + DAY(dates.d), 
-    DateValue             = cast(dates.d as date), 
+	DateKey               = cast(dates.d as date), --Other option is encoded integer: YEAR(dates.d) * 10000 + MONTH(dates.d) * 100 + DAY(dates.d), 
     DateLabelUS           = right('0' + cast(datepart(month, dates.d) as varchar(2)),2) + '-' + right('0' + cast(datepart(day, dates.d) as varchar(2)),2) + '-' + cast(datepart(year, dates.d) as varchar(4)),    -- Date in MM-dd-yyyy format
     DateLabelUK           = right('0' + cast(datepart(day, dates.d) as varchar(2)),2) + '-' + right('0' + cast(datepart(month, dates.d) as varchar(2)),2) + '-' + cast(datepart(year, dates.d) as varchar(4)),    -- Date in dd-MM-yyyy format
     DateLabelISO          = cast(datepart(year, dates.d) as varchar(4))  + '-' + right('0' + cast(datepart(month, dates.d) as varchar(2)),2) + '-' +  right('0' + cast(datepart(day, dates.d) as varchar(2)),2),  -- Date in yyyy-MM-dd format
@@ -289,7 +286,7 @@ SELECT
     'FY-Q' + CAST((CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN MONTH(dates.d) - @FYStartMonth + 1 ELSE MONTH(dates.d) + 13 - @FYStartMonth END - 1) / 3 + 1 AS varchar(10)) AS FiscalQuarterLabel,
     'FY' + CAST(CASE WHEN MONTH(dates.d) >= @FYStartMonth THEN YEAR(dates.d) + 1 ELSE YEAR(dates.d) END AS varchar(4)) + '-' + SUBSTRING(DATENAME(month, dates.d), 1, 3) AS FiscalMonthLabel,
 
-    DaysInMonth = datediff(day, cast(DATEFROMPARTS(YEAR(dates.d), MONTH(dates.d), 1) as date), cast(EOMONTH(dates.d) as date)),
+    DaysInMonth = datediff(day, cast(DATEFROMPARTS(YEAR(dates.d), MONTH(dates.d), 1) as date), cast(EOMONTH(dates.d) as date)) + 1,
     cast(DATEFROMPARTS(YEAR(dates.d), MONTH(dates.d), 1) as date) AS StartOfMonthDate,
     cast(EOMONTH(dates.d) as date) AS EndOfMonthDate,
 
@@ -426,7 +423,7 @@ update DimDate
 set 
     TodayFlag = 1
 where 
-    DateKey = YEAR(@today) * 10000 + MONTH(@today) * 100 + DAY(@today)
+    DateKey = @today
 
 -------------------------------------------------------------------------
 
