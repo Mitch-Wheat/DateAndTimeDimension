@@ -230,9 +230,9 @@ SELECT
 
     ISOWeekNumber         = DATEPART(ISO_WEEK, dates.d),
                          
-    CalendarYear          = DATEPART(year, dates.d),                         -- 2013
+    CalendarYear          = DATEPART(year, dates.d),                         -- e.g. 2013
     CalendarSemester      = CASE WHEN MONTH(dates.d) <= 6 THEN 1 ELSE 2 END, -- 1 - 2,                                                    
-    CalendarQuarter       = (MONTH(dates.d) - 1)/3 + 1,
+    CalendarQuarter       = (MONTH(dates.d) - 1)/3 + 1,                      -- 1 - 4
     CalendarMonth         = MONTH(dates.d),                                  -- 1 - 12
     CalendarWeek          = (DATEPART(dayofyear, dates.d) + 6) / 7,          -- 1 - 53
     CalendarYearLabel     = 'CY ' + CAST(YEAR(dates.d) AS varchar(4)),
@@ -466,8 +466,7 @@ WHERE DateKey IN
         CalendarMonth = 5
         AND DayOfWeek = 2
     GROUP BY
-        CalendarYear,
-        CalendarMonth
+        CalendarYear
 );
 
 -- 4th of July
@@ -562,10 +561,193 @@ WHERE
     CalendarMonth = 11
     AND DayOfWeek = 3
     AND DayOfMonth BETWEEN 2 AND 8
-
+GO
 ----------------------------------------------
 
 -- UK Holidays
+
+-- update DimDate to include UK public holidays
+
+-- For Years 1900 - 2099
+-- https://stackoverflow.com/questions/2192533/function-to-return-date-of-easter-for-the-given-year
+--
+CREATE OR ALTER FUNCTION dbo.GetEasterSunday1900_2099(@year INT)
+RETURNS Date 
+AS 
+BEGIN 
+    DECLARE     
+        @EpactCalc INT,  
+        @PaschalDaysCalc INT, 
+        @NumOfDaysToSunday INT, 
+        @EasterMonth INT, 
+        @EasterDay INT 
+
+    SET @EpactCalc = (24 + 19 * (@year % 19)) % 30 
+    SET @PaschalDaysCalc = @EpactCalc - (@EpactCalc / 28) 
+    SET @NumOfDaysToSunday = @PaschalDaysCalc - ((@year + @year / 4 + @PaschalDaysCalc - 13) % 7) 
+    SET @EasterMonth = 3 + (@NumOfDaysToSunday + 40) / 44 
+    SET @EasterDay = @NumOfDaysToSunday + 28 - (31 * (@EasterMonth / 4)) 
+
+    RETURN CONVERT(Date, RTRIM(@year) + RIGHT('0' + RTRIM(@EasterMonth), 2) + RIGHT('0' + RTRIM(@EasterDay), 2)) 
+    
+END 
+GO
+
+create table #UKEasterDates
+(
+    EasterFriday date not null,
+    EasterMonday date not null
+);
+
+
+;WITH digits(i) AS
+(
+    SELECT 1 AS I UNION ALL SELECT 2 AS I UNION ALL SELECT 3 UNION ALL
+    SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7
+    UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 0
+)
+,sequence(i) AS
+(
+    SELECT D1.i + (10*D2.i) + (100*D3.i) + (1000*D4.i) 
+    FROM digits AS D1
+    CROSS JOIN digits AS D2
+    CROSS JOIN digits AS D3
+    CROSS JOIN digits AS D4
+)
+insert into #UKEasterDates(EasterFriday, EasterMonday)
+select 
+    EasterFriday = dateadd(day, -2, dbo.GetEasterSunday1900_2099(i)),
+    EasterMonday = dateadd(day, 1, dbo.GetEasterSunday1900_2099(i))
+FROM sequence
+where i between 2000 AND 2099
+order by i
+
+
+
+-- USA standard DayOfWeek:
+--   Sunday = 1
+--   Monday = 2
+--   Tuesday = 3
+--   Wedsnesday = 4
+--   Thursday = 5
+--   Friday = 6
+--   Saturday = 7
+
+-- New Years Day
+UPDATE dbo.DimDate
+SET HolidayDescription = 'New Year''s Day',
+IsHolidayUK = 1
+WHERE
+(CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek BETWEEN 2 AND 6) -- Not Sat or Sun
+
+-- New year's day falls on Sat/Sun...
+UPDATE dbo.DimDate
+SET HolidayDescription = 'New Year''s Day Holiday (in Lieu)',
+IsHolidayUK = 1
+WHERE
+(CalendarMonth = 1 AND DayOfMonth = 2 AND DayOfWeek = 2)
+OR 
+(CalendarMonth = 1 AND DayOfMonth = 3 AND DayOfWeek = 2)
+
+----------
+
+-- Easter Friday
+UPDATE d
+SET HolidayDescription = 'Good Friday',
+IsHolidayUK = 1
+FROM dbo.DimDate d
+JOIN #UKEasterDates e ON e.EasterFriday = d.DateKey
+
+UPDATE d
+SET HolidayDescription = 'Easter Monday',
+IsHolidayUK = 1
+FROM dbo.DimDate d
+JOIN #UKEasterDates e ON e.EasterMonday = d.DateKey
+
+----------
+
+-- May Day Bank Holiday - First Monday in May
+UPDATE dbo.DimDate
+SET HolidayDescription = 'May Day Bank Holiday',
+IsHolidayUK = 1
+WHERE
+    CalendarMonth = 5
+    AND DayOfWeek = 2
+    AND WeekInMonth = 1
+
+
+-- Spring Bank Holiday: Last Monday in May. Coincides with US Memorial Day
+UPDATE dbo.DimDate
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + ';Spring Bank Holiday' ELSE 'Spring Bank Holiday' END,
+IsHolidayUK = 1
+FROM dbo.DimDate
+WHERE DateKey IN
+(
+    SELECT
+        MAX(DateKey)
+    FROM dbo.DimDate
+    WHERE
+        CalendarMonth = 5
+        AND DayOfWeek = 2
+    GROUP BY
+        CalendarYear
+);
+
+
+-- Summer Bank Holiday: Last Monday in August.
+UPDATE dbo.DimDate
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + ';Summer Bank Holiday' ELSE 'Summer Bank Holiday' END,
+IsHolidayUK = 1
+FROM dbo.DimDate
+WHERE DateKey IN
+(
+    SELECT
+        MAX(DateKey)
+    FROM dbo.DimDate
+    WHERE
+        CalendarMonth = 8
+        AND DayOfWeek = 2
+    GROUP BY
+        CalendarYear
+);
+
+---------
+
+-- xmas Day
+
+UPDATE dbo.DimDate
+SET HolidayDescription = 'Christmas Day',
+IsHolidayUK = 1
+WHERE CalendarMonth = 12 AND DayOfMonth = 25 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET HolidayDescription = 'Christmas Day Holiday',
+IsHolidayUK = 1
+WHERE 
+(CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2)
+OR
+(CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 2)
+
+-- Boxing Day
+
+UPDATE dbo.DimDate
+SET HolidayDescription = 'Boxing Day',
+IsHolidayUK = 1
+WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET HolidayDescription = 'Boxing Day Holiday',
+IsHolidayUK = 1
+WHERE 
+(CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 2)
+OR
+(CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 3)
+
+
+----------------------------------------------
+
+-- Australian Holidays (NSW based)
+-- See https://en.wikipedia.org/wiki/Public_holidays_in_Australia
 
 
 ----------------------------------------------
@@ -575,10 +757,6 @@ WHERE
 ----------------------------------------------
 
 -- Irish Holidays
-
-----------------------------------------------
-
--- Australian Holidays (which State?!?)
 
 ----------------------------------------------
 
