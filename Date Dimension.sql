@@ -90,7 +90,7 @@ CREATE TABLE DimDate
     IsHolidayMalta      tinyint      NOT NULL,
     IsHolidayAU         tinyint      NOT NULL,
     IsHolidayIreland    tinyint      NOT NULL,
-    HolidayDescription  varchar(100) NULL,
+    HolidayDescription  varchar(200) NULL,
 
     CalendarYear          smallint    NOT NULL,
     CalendarSemester      tinyint     NOT NULL,
@@ -414,19 +414,19 @@ where
 
 -- New Years Day
 UPDATE dbo.DimDate
-SET HolidayDescription = 'New Year''s Day',
+SET HolidayDescription = 'New Year''s Day (US)',
 IsHolidayUS = 1
 WHERE
 (CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek BETWEEN 2 AND 6) -- Not Sat or Sun
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'New Year''s Day Holiday (in Lieu)',
+SET HolidayDescription = 'New Year''s Day Holiday (US in Lieu)',
 IsHolidayUS = 1
 WHERE
 (CalendarMonth = 12 AND DayOfMonth = 31 AND DayOfWeek = 6)
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'New Year''s Day Holiday (in Lieu)',
+SET HolidayDescription = 'New Year''s Day Holiday (US in Lieu)',
 IsHolidayUS = 1
 WHERE
 (CalendarMonth = 1 AND DayOfMonth = 2 AND DayOfWeek = 2)
@@ -435,7 +435,7 @@ WHERE
 
 -- Martin Luthor King Day - Third Monday in January starting in 1983
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Martin Luthor King Jr Day',
+SET HolidayDescription = 'Martin Luthor King Jr Day (US)',
 IsHolidayUS = 1
 WHERE
     CalendarMonth = 1
@@ -445,7 +445,7 @@ WHERE
 
 -- President's Day - Third Monday in February
 UPDATE dbo.DimDate
-SET HolidayDescription = 'President''s Day',
+SET HolidayDescription = 'President''s Day (US)',
 IsHolidayUS = 1
 WHERE
     CalendarMonth = 2
@@ -454,7 +454,7 @@ WHERE
 
 -- Memorial Day - Last Monday in May
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Memorial Day',
+SET HolidayDescription = 'Memorial Day (US)',
 IsHolidayUS = 1
 FROM dbo.DimDate
 WHERE DateKey IN
@@ -471,17 +471,17 @@ WHERE DateKey IN
 
 -- 4th of July
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Independance Day',
+SET HolidayDescription = 'Independance Day (US)',
 IsHolidayUS = 1
 WHERE CalendarMonth = 7 AND DayOfMonth = 4 AND DayOfWeek BETWEEN 2 AND 6
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Independance Day (in Lieu)',
+SET HolidayDescription = 'Independance Day (US in Lieu)',
 IsHolidayUS = 1
 WHERE CalendarMonth = 7 AND DayOfMonth = 3 AND DayOfWeek = 6
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Independance Day (in Lieu)',
+SET HolidayDescription = 'Independance Day (US in Lieu)',
 IsHolidayUS = 1
 WHERE CalendarMonth = 7 AND DayOfMonth = 5 AND DayOfWeek = 2
 
@@ -489,7 +489,7 @@ WHERE CalendarMonth = 7 AND DayOfMonth = 5 AND DayOfWeek = 2
 
 -- Labor Day - First Monday in September
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Labor Day',
+SET HolidayDescription = 'Labor Day (US)',
 IsHolidayUS = 1
 FROM dbo.DimDate
 WHERE
@@ -499,7 +499,7 @@ WHERE
 
 -- Colombus Day - Second Monday in October
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Colombus Day',
+SET HolidayDescription = 'Colombus Day (US)',
 IsHolidayUS = 1
 WHERE
     CalendarMonth = 10
@@ -508,19 +508,19 @@ WHERE
 
 -- Veterans Day - November 11
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Veterans Day',
+SET HolidayDescription = 'Veterans Day (US)',
 IsHolidayUS = 1
 WHERE
     CalendarMonth = 11 AND DayOfMonth = 11 AND DayOfWeek BETWEEN 2 AND 6
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Veterans Day Holiday (in Lieu)',
+SET HolidayDescription = 'Veterans Day Holiday (US in Lieu)',
 IsHolidayUS = 1
 WHERE
     CalendarMonth = 11 AND DayOfMonth = 10 AND DayOfWeek = 6
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Veterans Day Holiday (in Lieu)',
+SET HolidayDescription = 'Veterans Day Holiday (US in Lieu)',
 IsHolidayUS = 1
 WHERE
     CalendarMonth = 11 AND DayOfMonth = 12 AND DayOfWeek = 2
@@ -529,23 +529,23 @@ WHERE
 
 -- Thanksgiving - Fourth Thursday in November
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Thanksgiving',
+SET HolidayDescription = 'Thanksgiving (US)',
 IsHolidayUS = 1
 WHERE CalendarMonth = 11 AND DayOfWeek = 5 AND WeekInMonth = 4
 
 -- xmas
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Christmas Day',
+SET HolidayDescription = 'Christmas Day (US)',
 IsHolidayUS = 1
 WHERE CalendarMonth = 12 AND DayOfMonth = 25 AND DayOfWeek BETWEEN 2 AND 6
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Christmas Day Holiday',
+SET HolidayDescription = 'Christmas Day Holiday (US)',
 IsHolidayUS = 1
 WHERE CalendarMonth = 12 AND DayOfMonth = 24 AND DayOfWeek = 6
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Christmas Day Holiday',
+SET HolidayDescription = 'Christmas Day Holiday (US)',
 IsHolidayUS = 1
 WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2
 
@@ -553,9 +553,9 @@ WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2
 
 -- Election Day is statutorily set by the Federal Government as
 -- the Tuesday next after the first Monday in November, equaling the Tuesday occurring within November 2 to November 8
--- Not a public holiday in every state.
+-- Not a public holiday in every state...
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Election Day',
+SET HolidayDescription = 'Election Day (US)',
 IsHolidayUS = 1
 WHERE
     CalendarMonth = 11
@@ -635,14 +635,14 @@ order by i
 
 -- New Years Day
 UPDATE dbo.DimDate
-SET HolidayDescription = 'New Year''s Day',
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; New Year''s Day (UK)' ELSE 'New Year''s Day (UK)' END,
 IsHolidayUK = 1
 WHERE
 (CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek BETWEEN 2 AND 6) -- Not Sat or Sun
 
 -- New year's day falls on Sat/Sun...
 UPDATE dbo.DimDate
-SET HolidayDescription = 'New Year''s Day Holiday (in Lieu)',
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; New Year''s Day Holiday (UK in Lieu)' ELSE 'New Year''s Day Holiday (UK in Lieu)' END ,
 IsHolidayUK = 1
 WHERE
 (CalendarMonth = 1 AND DayOfMonth = 2 AND DayOfWeek = 2)
@@ -668,7 +668,7 @@ JOIN #UKEasterDates e ON e.EasterMonday = d.DateKey
 
 -- May Day Bank Holiday - First Monday in May
 UPDATE dbo.DimDate
-SET HolidayDescription = 'May Day Bank Holiday',
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; May Day Bank Holiday (UK)' ELSE 'May Day Bank Holiday (UK)' END,
 IsHolidayUK = 1
 WHERE
     CalendarMonth = 5
@@ -678,7 +678,7 @@ WHERE
 
 -- Spring Bank Holiday: Last Monday in May. Coincides with US Memorial Day
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + ';Spring Bank Holiday' ELSE 'Spring Bank Holiday' END,
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; Spring Bank Holiday (UK)' ELSE 'Spring Bank Holiday (UK)' END,
 IsHolidayUK = 1
 FROM dbo.DimDate
 WHERE DateKey IN
@@ -696,7 +696,7 @@ WHERE DateKey IN
 
 -- Summer Bank Holiday: Last Monday in August.
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + ';Summer Bank Holiday' ELSE 'Summer Bank Holiday' END,
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; Summer Bank Holiday (UK)' ELSE 'Summer Bank Holiday (UK)' END,
 IsHolidayUK = 1
 FROM dbo.DimDate
 WHERE DateKey IN
@@ -721,28 +721,31 @@ IsHolidayUK = 1
 WHERE CalendarMonth = 12 AND DayOfMonth = 25 AND DayOfWeek BETWEEN 2 AND 6
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Christmas Day Holiday',
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; Christmas Day Holiday (UK)' ELSE 'Christmas Day Holiday (UK)' END ,
 IsHolidayUK = 1
 WHERE 
 (CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2)
 OR
 (CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 2)
 
+
 -- Boxing Day
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Boxing Day',
+SET HolidayDescription = 'Boxing Day (UK)',
 IsHolidayUK = 1
-WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek BETWEEN 2 AND 6
+WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek BETWEEN 3 AND 6
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Boxing Day Holiday',
+SET HolidayDescription = 'Boxing Day Holiday (UK)',
 IsHolidayUK = 1
 WHERE 
-(CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 2)
+(CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 3)
 OR
-(CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 3)
+(CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 2)
 
+
+drop table #UKEasterDates;
 
 ----------------------------------------------
 
