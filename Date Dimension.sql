@@ -742,6 +742,8 @@ IsHolidayUK = 1
 WHERE 
 (CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 3)
 OR
+(CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 3)
+OR
 (CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 2)
 
 
