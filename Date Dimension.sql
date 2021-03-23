@@ -670,14 +670,18 @@ OR
 
 -- Easter Friday
 UPDATE d
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Good Friday',
-IsHolidayUK = 1
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Good Friday',
+    IsHolidayUK = 1,
+    IsHolidayMalta = 1
 FROM dbo.DimDate d
 JOIN #UKEasterDates e ON e.EasterFriday = d.DateKey
 
 UPDATE d
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Easter Monday',
-IsHolidayUK = 1
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Easter Monday'  ,
+    IsHolidayUK = 1,
+    IsHolidayIreland = 1
 FROM dbo.DimDate d
 JOIN #UKEasterDates e ON e.EasterMonday = d.DateKey
 
@@ -685,8 +689,9 @@ JOIN #UKEasterDates e ON e.EasterMonday = d.DateKey
 
 -- May Day Bank Holiday - First Monday in May
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'May Day (UK)',
-IsHolidayUK = 1
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'May Day (UK)'   ,
+    IsHolidayUK = 1
 WHERE
     CalendarMonth = 5
     AND DayOfWeek = 2
@@ -734,31 +739,35 @@ WHERE DateKey IN
 
 -- falling on a Sat or Sun
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Christmas Day Holiday (UK)',
-IsHolidayUK = 1
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Christmas Day Holiday (UK)',
+    IsHolidayUK = 1
 WHERE 
-(CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2)
-OR
-(CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 2)
+    (CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2)
+    OR
+    (CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 2)
 
 
 -- Boxing Day
 
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Boxing Day (UK)',
-IsHolidayUK = 1
-WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek BETWEEN 3 AND 6
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Boxing Day (UK)',
+    IsHolidayUK = 1
+WHERE 
+    (CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek BETWEEN 3 AND 6)
 
 -- falling on a Sat or Sun
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Boxing Day Holiday (UK)',
-IsHolidayUK = 1
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Boxing Day Holiday (UK)',
+    IsHolidayUK = 1
 WHERE 
-(CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 3)
-OR
-(CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 3)
-OR
-(CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 2)
+    (CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 3)
+    OR
+    (CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 3)
+    OR
+    (CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 2)
 
 
 drop table #UKEasterDates;
@@ -773,6 +782,7 @@ GO
 ----------------------------------------------
 
 -- Malta Holidays
+
 -- Since 2006, public holidays that fall on a weekend do not get a holiday day in lieu.
 -- Malta hase most holidays of all the countries in the European Union.
 
@@ -916,23 +926,36 @@ WHERE DateKey IN
         CalendarYear
 );
 
+-- falling on a Sat or Sun
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Christmas Day Holiday (UK)',
+    IsHolidayIreland = 1
+WHERE 
+    (CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2)
+    OR
+    (CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 2)
+
 -- St. Stephen's Day 26th December
 
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'St. Stephen''s Day (Ireland)',
-IsHolidayUK = 1
-WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek BETWEEN 3 AND 6
-
--- falling on a Sat or Sun
-UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'St. Stephen''s Day Holiday (Ireland)',
-IsHolidayUK = 1
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'St. Stephen''s Day (Ireland)',
+    IsHolidayIreland = 1
 WHERE 
-(CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 3)
-OR
-(CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 3)
-OR
-(CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 2)
+    (CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek BETWEEN 3 AND 6)
+
+-- ...falling on a Sat or Sun
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'St. Stephen''s Day Holiday (Ireland)',
+    IsHolidayIreland = 1
+WHERE 
+    (CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 3)
+    OR
+    (CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 3)
+    OR
+    (CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 2)
 
 ----------------------------------------------
 
