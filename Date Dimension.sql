@@ -2,7 +2,8 @@
 -- 1). The TodayFlag needs to be updated once per day (timezone dependent: might need 2 flags) by a scheduled task
 -- 2). If you use an unusual Fiscal year (say 5-4-4), it will need to be loaded from an external source (such as an Excel spreadsheet)
 -- 3). Any label can have it's text changed without affecting tables referring to dimension.
-
+SET NOCOUNT ON;
+GO
 
 IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME = 'DimDate')
 BEGIN
@@ -453,8 +454,7 @@ SET
 FROM 
     dbo.DimDate d
 WHERE
-(CalendarMonth = 12 AND DayOfMonth = 31 AND DayOfWeek = 6)
-AND EXISTS (SELECT 1 FROM dbo.DimDate d2 WHERE (CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek = 7) AND d2.CalendarYear = d.CalendarYear - 1)
+    (CalendarMonth = 12 AND DayOfMonth = 31 AND DayOfWeek = 6)
 
 UPDATE dbo.DimDate
 SET HolidayDescription = 'New Year''s Day Holiday (US in Lieu)',
