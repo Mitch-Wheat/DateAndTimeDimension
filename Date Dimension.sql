@@ -14,7 +14,7 @@ declare @baseDate char(8) = '19000101';  -- also used as the 'Unknown date': if 
 declare @startDate date   = '2000-01-01' -- Min. transaction date ?
 declare @endDate date     = '2040-12-31'
 
-declare @FYStartMonth int = 07 -- July 1st:  October 1st is accounting period for the US federal government; July 1st for most states
+declare @FYStartMonth int = 7 -- July 1st:  October 1st is accounting period for the US federal government; July 1st for most states
 
 --declare @FiscalDates table
 --(
@@ -271,7 +271,6 @@ from
 where  
     ((dates.d between @startDate and @endDate)
     or dates.d = @baseDate) -- Dummy date placeholder for unknown dates.
-
 order by
     DateKey
 
@@ -384,7 +383,7 @@ order by
 
 -------------------------------------------------------------------------
 
--- Updating the TodayFlag would be a daily scheduled job...
+-- Updating the TodayFlag needs to be a daily scheduled job...
 
 update DimDate
 set TodayFlag = 0
@@ -398,6 +397,38 @@ set
     TodayFlag = 1
 where
     DateKey = @today
+GO
+
+-------------------------------------------------------------------------
+
+-- Common Holidays
+
+-- xmas day where it falls on a Mon to Fri
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = 'Christmas Day',
+    IsHolidayUS = 1,
+    IsHolidayUK = 1,
+    IsHolidayMalta = 1,
+    IsHolidayIreland = 1,
+    IsHolidayAU = 1
+WHERE 
+    CalendarMonth = 12 AND DayOfMonth = 25 AND DayOfWeek BETWEEN 2 AND 6
+
+
+-- New Year's day where it falls on a Mon to Fri
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = 'New Year''s Day',
+    IsHolidayUS = 1,
+    IsHolidayUK = 1,
+    IsHolidayMalta = 1,
+    IsHolidayIreland = 1,
+    IsHolidayAU = 1
+WHERE
+    CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek BETWEEN 2 AND 6
+
 
 -------------------------------------------------------------------------
 
@@ -412,18 +443,18 @@ where
 --   Friday = 6
 --   Saturday = 7
 
--- New Years Day
-UPDATE dbo.DimDate
-SET HolidayDescription = 'New Year''s Day (US)',
-IsHolidayUS = 1
-WHERE
-(CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek BETWEEN 2 AND 6) -- Not Sat or Sun
 
-UPDATE dbo.DimDate
-SET HolidayDescription = 'New Year''s Day Holiday (US in Lieu)',
-IsHolidayUS = 1
+-- New Years Day falling Mon to Fri is Common (above)
+
+UPDATE d
+SET 
+    HolidayDescription = 'New Year''s Day Holiday (US in Lieu)',
+    IsHolidayUS = 1
+FROM 
+    dbo.DimDate d
 WHERE
 (CalendarMonth = 12 AND DayOfMonth = 31 AND DayOfWeek = 6)
+AND EXISTS (SELECT 1 FROM dbo.DimDate d2 WHERE (CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek = 7) AND d2.CalendarYear = d.CalendarYear - 1)
 
 UPDATE dbo.DimDate
 SET HolidayDescription = 'New Year''s Day Holiday (US in Lieu)',
@@ -506,6 +537,22 @@ WHERE
     AND DayOfWeek = 2
     AND WeekInMonth = 2
 
+----------
+
+-- Election Day is statutorily set by the Federal Government as
+-- the Tuesday next after the first Monday in November, equaling the Tuesday occurring within November 2 to November 8
+-- Not a public holiday in every state...
+UPDATE dbo.DimDate
+SET HolidayDescription = 'Election Day (US)',
+IsHolidayUS = 1
+WHERE
+    CalendarMonth = 11
+    AND DayOfWeek = 3
+    AND DayOfMonth BETWEEN 2 AND 8
+GO
+
+----------
+
 -- Veterans Day - November 11
 UPDATE dbo.DimDate
 SET HolidayDescription = 'Veterans Day (US)',
@@ -533,11 +580,9 @@ SET HolidayDescription = 'Thanksgiving (US)',
 IsHolidayUS = 1
 WHERE CalendarMonth = 11 AND DayOfWeek = 5 AND WeekInMonth = 4
 
+----------
+
 -- xmas
-UPDATE dbo.DimDate
-SET HolidayDescription = 'Christmas Day (US)',
-IsHolidayUS = 1
-WHERE CalendarMonth = 12 AND DayOfMonth = 25 AND DayOfWeek BETWEEN 2 AND 6
 
 UPDATE dbo.DimDate
 SET HolidayDescription = 'Christmas Day Holiday (US)',
@@ -548,20 +593,8 @@ UPDATE dbo.DimDate
 SET HolidayDescription = 'Christmas Day Holiday (US)',
 IsHolidayUS = 1
 WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2
-
-----------
-
--- Election Day is statutorily set by the Federal Government as
--- the Tuesday next after the first Monday in November, equaling the Tuesday occurring within November 2 to November 8
--- Not a public holiday in every state...
-UPDATE dbo.DimDate
-SET HolidayDescription = 'Election Day (US)',
-IsHolidayUS = 1
-WHERE
-    CalendarMonth = 11
-    AND DayOfWeek = 3
-    AND DayOfMonth BETWEEN 2 AND 8
 GO
+
 ----------------------------------------------
 
 -- UK Holidays
@@ -633,12 +666,7 @@ order by i
 --   Friday = 6
 --   Saturday = 7
 
--- New Years Day
-UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; New Year''s Day (UK)' ELSE 'New Year''s Day (UK)' END,
-IsHolidayUK = 1
-WHERE
-(CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek BETWEEN 2 AND 6) -- Not Sat or Sun
+-- New Years Day falling Mon to Fri is Common (above)
 
 -- New year's day falls on Sat/Sun...
 UPDATE dbo.DimDate
@@ -715,11 +743,7 @@ WHERE DateKey IN
 
 -- xmas Day
 
-UPDATE dbo.DimDate
-SET HolidayDescription = 'Christmas Day',
-IsHolidayUK = 1
-WHERE CalendarMonth = 12 AND DayOfMonth = 25 AND DayOfWeek BETWEEN 2 AND 6
-
+-- falling on a Sat or Sun
 UPDATE dbo.DimDate
 SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; Christmas Day Holiday (UK)' ELSE 'Christmas Day Holiday (UK)' END ,
 IsHolidayUK = 1
@@ -736,6 +760,7 @@ SET HolidayDescription = 'Boxing Day (UK)',
 IsHolidayUK = 1
 WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek BETWEEN 3 AND 6
 
+-- falling on a Sat or Sun
 UPDATE dbo.DimDate
 SET HolidayDescription = 'Boxing Day Holiday (UK)',
 IsHolidayUK = 1
