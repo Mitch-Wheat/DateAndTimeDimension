@@ -670,7 +670,7 @@ order by i
 
 -- New year's day falls on Sat/Sun...
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; New Year''s Day Holiday (UK in Lieu)' ELSE 'New Year''s Day Holiday (UK in Lieu)' END ,
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'New Year''s Day Holiday (UK in Lieu)' ,
 IsHolidayUK = 1
 WHERE
 (CalendarMonth = 1 AND DayOfMonth = 2 AND DayOfWeek = 2)
@@ -696,7 +696,7 @@ JOIN #UKEasterDates e ON e.EasterMonday = d.DateKey
 
 -- May Day Bank Holiday - First Monday in May
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; May Day Bank Holiday (UK)' ELSE 'May Day Bank Holiday (UK)' END,
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'May Day Bank Holiday (UK)',
 IsHolidayUK = 1
 WHERE
     CalendarMonth = 5
@@ -706,7 +706,7 @@ WHERE
 
 -- Spring Bank Holiday: Last Monday in May. Coincides with US Memorial Day
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; Spring Bank Holiday (UK)' ELSE 'Spring Bank Holiday (UK)' END,
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Spring Bank Holiday (UK)',
 IsHolidayUK = 1
 FROM dbo.DimDate
 WHERE DateKey IN
@@ -724,7 +724,7 @@ WHERE DateKey IN
 
 -- Summer Bank Holiday: Last Monday in August.
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; Summer Bank Holiday (UK)' ELSE 'Summer Bank Holiday (UK)' END,
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Summer Bank Holiday (UK)',
 IsHolidayUK = 1
 FROM dbo.DimDate
 WHERE DateKey IN
@@ -745,7 +745,7 @@ WHERE DateKey IN
 
 -- falling on a Sat or Sun
 UPDATE dbo.DimDate
-SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; Christmas Day Holiday (UK)' ELSE 'Christmas Day Holiday (UK)' END ,
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Christmas Day Holiday (UK)',
 IsHolidayUK = 1
 WHERE 
 (CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2)
@@ -756,13 +756,13 @@ OR
 -- Boxing Day
 
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Boxing Day (UK)',
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Boxing Day (UK)',
 IsHolidayUK = 1
 WHERE CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek BETWEEN 3 AND 6
 
 -- falling on a Sat or Sun
 UPDATE dbo.DimDate
-SET HolidayDescription = 'Boxing Day Holiday (UK)',
+SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Boxing Day Holiday (UK)',
 IsHolidayUK = 1
 WHERE 
 (CalendarMonth = 12 AND DayOfMonth = 27 AND DayOfWeek = 3)
@@ -773,6 +773,7 @@ OR
 
 
 drop table #UKEasterDates;
+GO
 
 ----------------------------------------------
 
@@ -783,6 +784,85 @@ drop table #UKEasterDates;
 ----------------------------------------------
 
 -- Malta Holidays
+-- Since 2006, public holidays that fall on a weekend do not get a holiday day in lieu.
+-- Malta hase most holidays of all the countries in the European Union.
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Feast of Saint Paul''s Shipwreck (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 2 AND DayOfMonth = 10 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Feast of Saint Joseph (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 3 AND DayOfMonth = 19 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Freedom Day (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 3 AND DayOfMonth = 31 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Worker''s Day (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 5 AND DayOfMonth = 1 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Sette Giugno (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 6 AND DayOfMonth = 7 AND DayOfWeek BETWEEN 2 AND 6
+    
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Feast of St. Peter and St. Paul (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 6 AND DayOfMonth = 29 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Feast of the Assumption (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 8 AND DayOfMonth = 15 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Victory Day (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 9 AND DayOfMonth = 8 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Independence Day (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 9 AND DayOfMonth = 21 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Feast of the Immaculate Conception (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 12 AND DayOfMonth = 8 AND DayOfWeek BETWEEN 2 AND 6
+
+UPDATE dbo.DimDate
+SET 
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Republic Day (Malta)',
+    IsHolidayMalta = 1
+WHERE
+    CalendarMonth = 12 AND DayOfMonth = 13 AND DayOfWeek BETWEEN 2 AND 6
 
 ----------------------------------------------
 
