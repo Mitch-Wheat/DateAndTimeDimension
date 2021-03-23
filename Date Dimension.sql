@@ -926,10 +926,10 @@ WHERE DateKey IN
         CalendarYear
 );
 
--- falling on a Sat or Sun
+-- xmas day falling on a Sat or Sun
 UPDATE dbo.DimDate
 SET 
-    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Christmas Day Holiday (UK)',
+    HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Christmas Day Holiday (Ireland)',
     IsHolidayIreland = 1
 WHERE 
     (CalendarMonth = 12 AND DayOfMonth = 26 AND DayOfWeek = 2)
