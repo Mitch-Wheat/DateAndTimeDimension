@@ -1202,12 +1202,12 @@ BEGIN
     WHERE
         (CalendarMonth = 11 AND DayOfMonth = 1);
 
-    -- All Souls' Day: 2nd November
+    -- All Souls' Day: 2nd November : Special hoiday changes by presidential proclamation
     UPDATE dbo.DimDate
         SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'All Souls'' Day', 'PHL'),
         IsHolidayPhilippines = 1
     WHERE
-        (CalendarMonth = 11 AND DayOfMonth = 2);
+        (CalendarYear < 2021 AND CalendarMonth = 11 AND DayOfMonth = 2);
 
     -- Bonifacio Day: 30th November
     UPDATE dbo.DimDate
@@ -1229,22 +1229,29 @@ BEGIN
     WHERE
         (CalendarMonth = 12 AND DayOfMonth = 30);
 
+    -- New Year's Eve: 31st December : Special hoiday changes by presidential proclamation
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Christmas Eve', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        CalendarYear < 2021 AND CalendarMonth = 12 AND DayOfMonth = 24;
+
     UPDATE dbo.DimDate
         SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Christmas Day', 'PHL'),
         IsHolidayPhilippines = 1
     WHERE
         CalendarMonth = 12 AND DayOfMonth = 25 AND DayOfWeek IN (1, 7);
 
-    -- New Year's Eve: 31st December
+    -- New Year's Eve: 31st December : Special hoiday changes by presidential proclamation
     UPDATE dbo.DimDate
         SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'New Year''s Eve', 'PHL'),
         IsHolidayPhilippines = 1
     WHERE
-        CalendarMonth = 12 AND DayOfMonth = 31;
+        CalendarYear < 2021 AND CalendarMonth = 12 AND DayOfMonth = 31;
 
     -- Special moveable dates: Ramadan 2021
-    -- 13 May	Thursday	Eidul-Fitar
-    -- 20 Jul	Tuesday	    Eid al-Adha (Feast of the Sacrifice)
+    -- Thursday 13th May: Eidul-Fitar
+    -- Tuesday 20th July: Eid al-Adha (Feast of the Sacrifice)
     UPDATE dbo.DimDate
         SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Eidul-Fitar', 'PHL'),
         IsHolidayPhilippines = 1
@@ -1258,19 +1265,8 @@ BEGIN
         CalendarYear = 2021 AND CalendarMonth = 7 AND DayOfMonth = 20;
 
 
-    -- Special hoiday changes by presidential proclamation....
+    -- Special hoiday changes by presidential proclamation...Proclamation No. 1107
 
-    -- New Year's Eve: 31st December 2021 is a working-holiday 
-    UPDATE dbo.DimDate
-        SET IsHolidayPhilippines = 0
-    WHERE
-        CalendarYear >= 2021 AND CalendarMonth = 12 AND DayOfMonth = 31;
-
-    UPDATE dbo.DimDate
-        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'All Souls'' Day', 'PHL'),
-        IsHolidayPhilippines = 1
-    WHERE
-        (CalendarMonth = 11 AND DayOfMonth = 2);
 
 END
 GO
