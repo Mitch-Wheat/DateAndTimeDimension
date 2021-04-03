@@ -82,7 +82,7 @@ END
 
 IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME = 'DimDate')
 BEGIN
-    DROP TABLE DimDate;
+    DROP TABLE dbo.DimDate;
 END
 
 declare @baseDate date;  -- if your dates start earlier than this pick another date (1753-01-01 maybe)
@@ -128,29 +128,30 @@ SET @baseDate = @unknownDate
 
 CREATE TABLE DimDate
 (
-    DateKey             date         NOT NULL CONSTRAINT PK_DimDate_DateKey PRIMARY KEY,
-    DateLabelUS         varchar(10)  NOT NULL,
-    DateLabelUK         varchar(10)  NOT NULL,
-    DateLabelISO        varchar(10)  NOT NULL,
-    [DayName]           varchar(9)   NOT NULL,
-    [DayShortName]      varchar(3)   NOT NULL,
-    [MonthName]         varchar(9)   NOT NULL,
-    [MonthShortName]    varchar(3)   NOT NULL,
-    [DayOfYear]         smallint     NOT NULL,
-    [DayOfWeek]         tinyint      NOT NULL,  
-    [DayOfMonth]        tinyint      NOT NULL,
-    WeekInMonth         tinyint      NOT NULL,
-    ISOWeekNumber       tinyint      NOT NULL,
-    WeekendFlag         tinyint      NOT NULL,
-    TodayFlag           tinyint      NOT NULL,
-    DayIsLastOfMonth    tinyint      NOT NULL,
-    IsHolidayUS         tinyint      NOT NULL,
-    IsHolidayUK         tinyint      NOT NULL,
-    IsHolidayMalta      tinyint      NOT NULL,
-    IsHolidayAU         tinyint      NOT NULL,
-    IsHolidayIreland    tinyint      NOT NULL,
-    IsHolidayCanada     tinyint      NOT NULL,
-    HolidayDescription  varchar(200) NULL,
+    DateKey               date         NOT NULL CONSTRAINT PK_DimDate_DateKey PRIMARY KEY,
+    DateLabelUS           varchar(10)  NOT NULL,
+    DateLabelUK           varchar(10)  NOT NULL,
+    DateLabelISO          varchar(10)  NOT NULL,
+    [DayName]             varchar(9)   NOT NULL,
+    [DayShortName]        varchar(3)   NOT NULL,
+    [MonthName]           varchar(9)   NOT NULL,
+    [MonthShortName]      varchar(3)   NOT NULL,
+    [DayOfYear]           smallint     NOT NULL,
+    [DayOfWeek]           tinyint      NOT NULL,  
+    [DayOfMonth]          tinyint      NOT NULL,
+    WeekInMonth           tinyint      NOT NULL,
+    ISOWeekNumber         tinyint      NOT NULL,
+    IsWeekDay             tinyint      NOT NULL,
+    TodayFlag             tinyint      NOT NULL,
+    DayIsLastOfMonth      tinyint      NOT NULL,
+    IsHolidayUS           tinyint      NOT NULL,
+    IsHolidayUK           tinyint      NOT NULL,
+    IsHolidayMalta        tinyint      NOT NULL,
+    IsHolidayAU           tinyint      NOT NULL,
+    IsHolidayIreland      tinyint      NOT NULL,
+    IsHolidayCanada       tinyint      NOT NULL,
+    IsHolidayPhilippines  tinyint      NOT NULL,
+    HolidayDescription    varchar(200) NULL,
 
     CalendarYear          smallint    NOT NULL,
     CalendarSemester      tinyint     NOT NULL,
@@ -229,7 +230,7 @@ INSERT DimDate
     [DayOfMonth],
     [DayOfWeek],
     WeekInMonth,
-    WeekendFlag,
+    IsWeekDay,
     TodayFlag,
     DayIsLastOfMonth,
     IsHolidayUS,
@@ -238,6 +239,7 @@ INSERT DimDate
     IsHolidayMalta,
     IsHolidayIreland,
     IsHolidayCanada,
+    IsHolidayPhilippines,
     ISOWeekNumber,
 
     CalendarYear,
@@ -280,7 +282,7 @@ SELECT
     [DayOfMonth]          = DATEPART(day, dates.d),                          -- 1 - 31
     [DayOfWeek]           = DATEPART(weekday, dates.d),                      -- 1 - 7, Using Sunday = 1 [USA standard] (In the UK Monday =  1 and Sunday = 7)
     WeekInMonth           = ((DATEPART(day, dates.d) - 1)/7) + 1,            -- 1 - 5
-    WeekendFlag           = CASE WHEN DATENAME(weekday, dates.d) in ('Saturday','Sunday') THEN 1 ELSE 0 END,  -- 1 = WeekEnd, 0 = WeekDay
+    IsWeekDay             = CASE WHEN DATENAME(weekday, dates.d) in ('Saturday','Sunday') THEN 0 ELSE 1 END,  -- 0 = WeekEnd, 1 = WeekDay
     TodayFlag             = 0, -- This is us updated by a task that needs to runs daily...
     DayIsLastOfMonth      = CASE WHEN DATEPART(day, DATEADD(d, -1, DATEADD(m, DATEDIFF(m, 0, dates.d) + 1, 0))) = DAY(dates.d) THEN 1 ELSE 0 END,
     IsHolidayUS           = 0, -- Needs to be filled in after population
@@ -289,6 +291,7 @@ SELECT
     IsHolidayMalta        = 0, -- Needs to be filled in after population
     IsHolidayIreland      = 0, -- Needs to be filled in after population
     IsHolidayCanada       = 0, -- Needs to be filled in after population
+    IsHolidayPhilippines  = 0, -- Needs to be filled in after population
 
     ISOWeekNumber         = DATEPART(ISO_WEEK, dates.d),
                          
@@ -360,6 +363,7 @@ BEGIN
     EXEC SetIrelandHolidays;
     EXEC SetMaltaHolidays;
     EXEC SetCanadaHolidays
+    EXEC SetPhilippinesHolidays;
 
 END
 GO
@@ -823,26 +827,28 @@ BEGIN
     -- xmas day where it falls on a Mon to Fri
     UPDATE dbo.DimDate
     SET 
-        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Christmas Day (US, UK, MLT, IRE, AU, CAN)',
+        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Christmas Day (US, UK, MLT, IRE, AU, CAN, PHL)',
         IsHolidayUS = 1,
         IsHolidayUK = 1,
         IsHolidayMalta = 1,
         IsHolidayIreland = 1,
         IsHolidayAU = 1,
-        IsHolidayCanada = 1
+        IsHolidayCanada = 1,
+        IsHolidayPhilippines = 1
     WHERE 
         CalendarMonth = 12 AND DayOfMonth = 25 AND DayOfWeek BETWEEN 2 AND 6
 
     -- New Year's day where it falls on a Mon to Fri
     UPDATE dbo.DimDate
     SET 
-        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'New Year''s Day (US, UK, MLT, IRE, AU, CAN)',
+        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'New Year''s Day (US, UK, MLT, IRE, AU, CAN, PHL)',
         IsHolidayUS = 1,
         IsHolidayUK = 1,
         IsHolidayMalta = 1,
         IsHolidayIreland = 1,
         IsHolidayAU = 1,
-        IsHolidayCanada = 1
+        IsHolidayCanada = 1,
+        IsHolidayPhilippines = 1
     WHERE
         CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek BETWEEN 2 AND 6
 
@@ -876,18 +882,19 @@ BEGIN
         EasterMonday = dateadd(day, 1, dbo.GetEasterSunday1900_2099(i))
     FROM sequence
     where i between 1901 AND 2099
-    order by i
+    order by i;
 
     -- Easter Friday
     UPDATE d
     SET 
-        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Good Friday (UK, AU, MLT, CAN)',
+        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Good Friday (UK, AU, MLT, CAN, PHL)',
         IsHolidayUK = 1,
         IsHolidayAU = 1,
         IsHolidayMalta = 1,
-        IsHolidayCanada = 1
+        IsHolidayCanada = 1,
+        IsHolidayPhilippines = 1
     FROM dbo.DimDate d
-    JOIN #EasterDates e ON e.EasterFriday = d.DateKey
+    JOIN #EasterDates e ON e.EasterFriday = d.DateKey;
 
     -- Easter Monday
     UPDATE d
@@ -897,7 +904,61 @@ BEGIN
         IsHolidayAU = 1,
         IsHolidayIreland = 1
     FROM dbo.DimDate d
-    JOIN #EasterDates e ON e.EasterMonday = d.DateKey
+    JOIN #EasterDates e ON e.EasterMonday = d.DateKey;
+
+    -- Maundy Thursday
+    UPDATE d
+    SET 
+        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Maundy Thursday (PHL)',
+        IsHolidayPhilippines = 1
+    FROM dbo.DimDate d
+    JOIN #EasterDates e ON dateadd(day, -1, e.EasterFriday) = d.DateKey;
+
+    -- Black Saturday
+    UPDATE d
+    SET 
+        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Black Saturday (PHL)',
+        IsHolidayPhilippines = 1
+    FROM dbo.DimDate d
+    JOIN #EasterDates e ON dateadd(day, +1, e.EasterFriday) = d.DateKey;
+
+    drop table #EasterDates;
+
+    ---------------------------------------------------------------------
+
+    -- Chinese New Year
+    if object_id('tempdb..#ChineseNewYearDates') is not null
+        drop table #ChineseNewYearDates;
+
+    create table #ChineseNewYearDates
+    (
+        [Date] date not null
+    );
+
+    INSERT INTO #ChineseNewYearDates([Date])
+    VALUES
+    ('1971-01-27'), ('1972-02-15'), ('1973-02-03'), ('1974-01-23'), ('1975-02-11'), ('1976-01-31'), ('1977-02-18'), ('1978-02-07'), ('1979-01-28'), ('1980-02-16'), 
+    ('1981-02-05'), ('1982-01-25'), ('1983-02-13'), ('1984-02-02'), ('1985-02-20'), ('1986-02-09'), ('1987-01-29'), ('1988-02-17'), ('1989-02-06'), ('1990-01-27'), 
+    ('1991-02-15'), ('1992-02-04'), ('1993-01-23'), ('1994-02-10'), ('1995-01-31'), ('1996-02-19'), ('1997-02-07'), ('1998-01-28'), ('1999-02-16'), ('2000-02-05'), 
+    ('2001-01-24'), ('2002-02-12'), ('2003-02-01'), ('2004-01-22'), ('2005-02-09'), ('2006-01-29'), ('2007-02-18'), ('2008-02-07'), ('2009-01-26'), ('2010-02-14'), 
+    ('2011-02-03'), ('2012-01-23'), ('2013-02-10'), ('2014-01-31'), ('2015-02-19'), ('2016-02-08'), ('2017-01-28'), ('2018-02-16'), ('2019-02-05'), ('2020-01-25'), 
+    ('2021-02-12'), ('2022-02-01'), ('2023-01-22'), ('2024-02-10'), ('2025-01-29'), ('2026-02-17'), ('2027-02-06'), ('2028-01-26'), ('2029-02-13'), ('2030-02-03'), 
+    ('2031-01-23'), ('2032-02-11'), ('2033-01-31'), ('2034-02-19'), ('2035-02-08'), ('2036-01-28'), ('2037-02-15'), ('2038-02-04'), ('2039-01-24'), ('2040-02-12'), 
+    ('2041-02-01'), ('2042-01-22'), ('2043-02-10'), ('2044-01-30'), ('2045-02-17'), ('2046-02-06'), ('2047-01-26'), ('2048-02-14'), ('2049-02-02'), ('2050-01-23'), 
+    ('2051-02-11'), ('2052-02-01'), ('2053-02-19'), ('2054-02-08'), ('2055-01-28'), ('2056-02-15'), ('2057-02-04'), ('2058-01-24'), ('2059-02-12'), ('2060-02-02'), 
+    ('2061-01-21'), ('2062-02-09'), ('2063-01-29'), ('2064-02-17'), ('2065-02-05'), ('2066-01-26'), ('2067-02-14'), ('2068-02-03'), ('2069-01-23'), ('2070-02-11'), 
+    ('2071-01-31'), ('2072-02-19'), ('2073-02-07'), ('2074-01-27'), ('2075-02-15'), ('2076-02-05'), ('2077-01-24'), ('2078-02-12'), ('2079-02-02'), ('2080-01-22'), 
+    ('2081-02-09'), ('2082-01-29'), ('2083-02-17'), ('2084-02-06'), ('2085-01-26'), ('2086-02-14'), ('2087-02-03'), ('2088-01-24'), ('2089-02-10'), ('2090-01-30'), 
+    ('2091-02-18'), ('2092-02-07'), ('2093-01-27'), ('2094-02-15'), ('2095-02-05'), ('2096-01-25'), ('2097-02-12'), ('2098-02-01'), ('2099-01-21')
+
+    UPDATE d
+    SET 
+        HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Chinese Lunar New Year', 'PHL'),
+        IsHolidayPhilippines = 1
+    FROM dbo.DimDate d
+    JOIN #ChineseNewYearDates e ON e.Date = d.DateKey;
+
+    DROP TABLE #ChineseNewYearDates;
 
 END
 GO
@@ -925,7 +986,6 @@ BEGIN
     SET @EasterDay = @NumOfDaysToSunday + 28 - (31 * (@EasterMonth / 4)) 
 
     RETURN CONVERT(Date, RTRIM(@year) + RIGHT('0' + RTRIM(@EasterMonth), 2) + RIGHT('0' + RTRIM(@EasterDay), 2)) 
-    
 END 
 GO
 
@@ -943,15 +1003,6 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- USA standard DayOfWeek:
-    --   Sunday     = 1
-    --   Monday     = 2
-    --   Tuesday    = 3
-    --   Wedsnesday = 4
-    --   Thursday   = 5
-    --   Friday     = 6
-    --   Saturday   = 7
-
     UPDATE dbo.DimDate
         SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'New Year''s Day Holiday', 'CAN'),
         IsHolidayCanada = 1
@@ -962,7 +1013,7 @@ BEGIN
 
     -- Family Day - Third Monday in February
     UPDATE dbo.DimDate
-        SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Family Day (CAN)',
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Family Day', 'CAN'),
         IsHolidayCanada = 1
     WHERE
         (CalendarMonth = 2 AND DayOfWeek = 2 AND WeekInMonth = 3)
@@ -990,14 +1041,14 @@ BEGIN
 
     -- Labor Day - First Monday in September
     UPDATE dbo.DimDate
-        SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Labour Day (CAN)',
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Labour Day', 'CAN'),
         IsHolidayCanada = 1
     WHERE
         CalendarMonth = 9 AND DayOfWeek = 2 AND WeekInMonth = 1
 
     -- Victoria Day: Monday before May 25
     UPDATE dbo.DimDate
-        SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Victoria Day (CAN)',
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Victoria Day', 'CAN'),
         IsHolidayCanada = 1
     WHERE DateKey IN
     (
@@ -1012,14 +1063,14 @@ BEGIN
 
     -- Civic Holiday (not Quebec)
     UPDATE dbo.DimDate
-    SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Civic Holiday (CAN)',
+    SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Civic Holiday', 'CAN'), 
         IsHolidayCanada = 1
     WHERE
         CalendarMonth = 8 AND DayOfWeek = 2 AND WeekInMonth = 1
 
     -- Thanksgiving - 2nd Monday in October
     UPDATE dbo.DimDate
-        SET HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Thanksgiving (CAN)',
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Thanksgiving', 'CAN'),
         IsHolidayCanada = 1
     WHERE 
         CalendarMonth = 10 AND DayOfWeek = 2 AND WeekInMonth = 2
@@ -1027,7 +1078,7 @@ BEGIN
     -- Remembrance Day - 11th November
     UPDATE d
     SET 
-        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Remembrance Day (CAN)',
+        HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Remembrance Day', 'CAN'),
         IsHolidayCanada = 1
     FROM 
         dbo.DimDate d
@@ -1036,7 +1087,7 @@ BEGIN
 
     UPDATE d
     SET 
-        HolidayDescription = CASE WHEN HolidayDescription IS NOT NULL THEN HolidayDescription + '; ' ELSE '' END + 'Remembrance Day Holiday (CAN)',
+        HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Remembrance Day Holiday', 'CAN'),
         IsHolidayCanada = 1
     FROM 
         dbo.DimDate d
@@ -1072,6 +1123,158 @@ BEGIN
 
 END
 GO
+
+-------------------------------------------------------------------------
+
+-- https://en.wikipedia.org/wiki/Public_holidays_in_the_Philippines
+-- The act specified that holidays falling on a Wednesday will be observed on the Monday of that week, 
+-- that holidays falling on a Sunday will be observed on the Monday that follows, 
+-- and provided that regular holidays and special days may be modified by order or proclamation
+
+-- It appears that regular (public) holidays that fall on a weekend don't get holiday days in lieu (?) TODO: double-check this....
+
+CREATE OR ALTER PROCEDURE SetPhilippinesHolidays
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'New Year''s Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        CalendarMonth = 1 AND DayOfMonth = 1 AND DayOfWeek IN (1, 7);
+
+    -- People Power Anniversary: 25th February
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'People Power Anniversary', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 2 AND DayOfMonth = 25);
+
+    -- Day of Valor: 9th April
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Day of Valor', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 4 AND DayOfMonth = 9);
+
+    -- Labor Day: 1st May
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Labor Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 5 AND DayOfMonth = 1);
+
+    -- Independence Day: 12th June
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Independence Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 6 AND DayOfMonth = 12);
+
+    -- Ninoy Aquino Day: 21st Auguest
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Ninoy Aquino Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 8 AND DayOfMonth = 21);
+
+    -- National Heroes' Day: Last Monday in August
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'National Heroes'' Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE DateKey IN
+    (
+        SELECT
+            MAX(DateKey)
+        FROM dbo.DimDate
+        WHERE
+            CalendarMonth = 8
+            AND DayOfWeek = 2
+        GROUP BY
+            CalendarYear
+    );
+
+    -- All Saints' Day: 1st November
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'All Saints'' Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 11 AND DayOfMonth = 1);
+
+    -- All Souls' Day: 2nd November
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'All Souls'' Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 11 AND DayOfMonth = 2);
+
+    -- Bonifacio Day: 30th November
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Bonifacio Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 11 AND DayOfMonth = 30);
+
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Feast of the Immaculate Conception', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        CalendarMonth = 12 AND DayOfMonth = 8;
+
+    -- Rizal Day: 30th December
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Rizal Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 12 AND DayOfMonth = 30);
+
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Christmas Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        CalendarMonth = 12 AND DayOfMonth = 25 AND DayOfWeek IN (1, 7);
+
+    -- New Year's Eve: 31st December
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'New Year''s Eve', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        CalendarMonth = 12 AND DayOfMonth = 31;
+
+    -- Special moveable dates: Ramadan 2021
+    -- 13 May	Thursday	Eidul-Fitar
+    -- 20 Jul	Tuesday	    Eid al-Adha (Feast of the Sacrifice)
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Eidul-Fitar', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        CalendarYear = 2021 AND CalendarMonth = 5 AND DayOfMonth = 13;
+
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'Eid al-Adha (Feast of the Sacrifice)', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        CalendarYear = 2021 AND CalendarMonth = 7 AND DayOfMonth = 20;
+
+
+    -- Special hoiday changes by presidential proclamation....
+
+    -- New Year's Eve: 31st December 2021 is a working-holiday 
+    UPDATE dbo.DimDate
+        SET IsHolidayPhilippines = 0
+    WHERE
+        CalendarYear >= 2021 AND CalendarMonth = 12 AND DayOfMonth = 31;
+
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddCountryToHolidayDescription(HolidayDescription, 'All Souls'' Day', 'PHL'),
+        IsHolidayPhilippines = 1
+    WHERE
+        (CalendarMonth = 11 AND DayOfMonth = 2);
+
+END
+GO
+
 -------------------------------------------------------------------------
 
 CREATE OR ALTER FUNCTION dbo.AddCountryToHolidayDescription
@@ -1126,4 +1329,4 @@ EXEC CreateDateDimension @startDate = '2000-01-01', @endDate = '2040-12-31', @FY
 GO
 
 
-
+-------------------------------------------------------------------------
