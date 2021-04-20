@@ -27,7 +27,10 @@ SOFTWARE.
 -- 1) The [TodayFlag] needs to be updated once per day by a scheduled task (timezone dependent: might need a flag for each timezone!) 
 -- 2) If you use an unusual Fiscal year (say 5-4-4), it will need to be loaded from an external source (such as an Excel spreadsheet)
 -- 3) Where possible, public holidays are calculated for each region.
--- 4) Easter dates for years 1901 to 2099
+-- 4) Easter dates for years 1901 to 2099 and Chinese New year dates for years 1971 to 2099.
+-- 5) The precise start date of the month Ramadan is by proclamation, so these need to be added, year by year.
+--    https://travel.stackexchange.com/questions/46148/how-to-calculate-when-ramadan-finishes
+--    https://en.wikipedia.org/wiki/Ramadan_%28calendar_month%29
 
 -------------------------------------------------------------------------
 
@@ -152,8 +155,7 @@ SET @baseDate = @unknownDate
 --  [YearStartDate] date
 --);
 
-----This would be populated from a Calendar Spreadsheet supplied by Accounts etc.
---     TODO: Automate load
+----This would be populated from a Calendar Spreadsheet supplied by Accounts, for example.
 --
 --INSERT INTO @FiscalDates
 --    ([Period], [MonthNo], [Year], [YearName], [Qtr], [Semester], [MonthName], [StartDate], [EndDate], [PeriodWeeks], YearStartDate)
@@ -554,6 +556,7 @@ BEGIN
         [Date] date not null
     );
 
+    -- Computed from here: https://stackoverflow.com/a/30719491/16076
     INSERT INTO #ChineseNewYearDates([Date])
     VALUES
     ('1971-01-27'), ('1972-02-15'), ('1973-02-03'), ('1974-01-23'), ('1975-02-11'), ('1976-01-31'), ('1977-02-18'), ('1978-02-07'), ('1979-01-28'), ('1980-02-16'), 
@@ -1048,6 +1051,9 @@ GO
 
 --------------------------------------------------------------------------------------------
 
+-- Australian Holidays (State based)
+-- See https://en.wikipedia.org/wiki/Public_holidays_in_Australia
+
 CREATE OR ALTER PROCEDURE SetAUHolidays
 AS
 BEGIN
@@ -1100,7 +1106,7 @@ BEGIN
         OR
         (CalendarMonth = 4 AND DayOfMonth = 27 AND DayOfWeek = 2)
 
-    -- TODO: Easter MONday can be as late as 26th April, and coincide with ANZAC day 
+    -- Easter MONday can be as late as 26th April, and coincide with ANZAC day (handled in common easter dates)
 
     -- Christmas Day falling on a weekend
     UPDATE dbo.DimDate
@@ -1130,7 +1136,6 @@ BEGIN
         OR
         (CalendarMonth = 12 AND DayOfMonth = 28 AND DayOfWeek = 2)
 
-    ---------------------------------------------------------------------------------------------
     ---------------------------------------------------------------------------------------------
 
     -- State Specific
@@ -1232,16 +1237,6 @@ BEGIN
 
 END
 GO
-
-------------------------------------------------------------------------------------------
-
-
--------------------------------------------------------------------------
-
--- Australian Holidays (State based)
--- See https://en.wikipedia.org/wiki/Public_holidays_in_Australia
-
--- TODO ...
 
 -------------------------------------------------------------------------
 
@@ -1376,7 +1371,7 @@ GO
 -- https://en.wikipedia.org/wiki/Public_holidays_in_the_Philippines
 -- Regular holidays and special days may be modified by order or proclamation
 -- It appears that regular (public) holidays that fall on a weekend don't get holiday days in lieu 
--- even though the wiki page hints at this(?) TODO: double-check ...
+-- even though the wiki page hints at this(?)
 
 CREATE OR ALTER PROCEDURE SetPhilippinesHolidays
 AS
