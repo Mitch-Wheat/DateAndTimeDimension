@@ -24,8 +24,8 @@ SOFTWARE.
 */
 
 -- Things to Note:
--- 1) The [TodayFlag] needs to be updated once per day by a scheduled task (timezone dependent: might need a flag for each timezone!) 
--- 2) If you use an unusual Fiscal year (say 5-4-4), it will need to be loaded from an external source (such as an Excel spreadsheet)
+-- 1) The [TodayFlag] needs to be updated once per day by a scheduled task (timezone dependent: might need a flag for each timezone). 
+-- 2) If you use an unusual Fiscal year (say 5-4-4), it will need to be loaded from an external source (such as an Excel/Google spreadsheet).
 -- 3) Where possible, public holidays are calculated for each region.
 -- 4) Easter dates for years 1901 to 2099 and Chinese New year dates for years 1971 to 2099.
 -- 5) The precise start date of the month Ramadan is by proclamation, so these need to be added, year by year.
