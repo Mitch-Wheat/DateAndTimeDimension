@@ -16,8 +16,8 @@ create table DimTimeOfDay
      HalfHourOfDay tinyint not null,          -- 1-24, incremented at the top of each half hour 
      QuarterHour tinyint not null,            -- 1-4, for each quarter hour 
      QuarterHourOfDay tinyint not null,       -- 1-48, incremented at the top of each half hour 
-     StringRepresentation24 char(8) not null, -- Military/European textual representation 
-     StringRepresentation12 char(8) not null, -- 12 hour clock representation without AM/PM 
+     StringRepresentation24 char(5) not null, -- Military/European textual representation 
+     StringRepresentation12 char(5) not null, -- 12 hour clock representation without AM/PM 
      HourIntervalString char(11) not null     -- Hour interval like 11am - 12pm
 );
 
@@ -38,8 +38,7 @@ create table DimTimeOfDay
         CROSS JOIN digits AS D4
         CROSS JOIN digits AS D5
 ) 
-insert into DimTimeOfDay
-(TimeKey, HourOfDay24, HourOfDay12, AmPm, MinuteOfHour, HalfHour, HalfHourOfDay, QuarterHour, QuarterHourOfDay, StringRepresentation24, StringRepresentation12, HourIntervalString) 
+insert into DimTimeOfDay(TimeKey, HourOfDay24, HourOfDay12, AmPm, MinuteOfHour, HalfHour, HalfHourOfDay, QuarterHour, QuarterHourOfDay, StringRepresentation24, StringRepresentation12, HourIntervalString) 
 select 
        TimeKey = i
       ,HourOfDay24   = datepart(hh, dateval)
@@ -50,11 +49,11 @@ select
       ,HalfHourOfDay = (i/30) + 1 
       ,QuarterHour   = ((i/15) % 4) + 1 
       ,QuarterHourOfDay = (i/15) + 1 
-      ,StringRepresentation24 = right('0' + cast(datepart(hh, dateval) as varchar(2)),2) + ':' + right('0' + cast(datepart(mi, dateval) as varchar(2)),2) 
-      ,StringRepresentation12 = right('0' + cast(datepart(hh, dateval) % 12 + case when datepart(hh, dateval) % 12 = 0 then 12 else 0 end as varchar(2)),2) +  
-                                                                  ':' + right('0' + cast(datepart(mi, dateval) as varchar(2)),2)
-      ,HourIntervalString = cast(case when ((datepart(hh, dateval)) % 12) = 0 then 12 else ((datepart(hh, dateval)) % 12) end as varchar(2)) + case when datepart(hh, dateval) between 0 and 11 then 'am' else 'pm' end +
-                            ' - ' +  cast(case when ((datepart(hh, dateval)+1) % 12) = 0 then 12 else ((datepart(hh, dateval)+1) % 12) end as varchar(2)) + case when (datepart(hh, dateval)+1) between 0 and 11 or (datepart(hh, dateval)+1)  = 24 then 'am' else 'pm' end
+      ,StringRepresentation24 = rtrim(right('0' + cast(datepart(hh, dateval) as varchar(2)),2) + ':' + right('0' + cast(datepart(mi, dateval) as varchar(2)),2) )
+      ,StringRepresentation12 = rtrim(right('0' + cast(datepart(hh, dateval) % 12 + case when datepart(hh, dateval) % 12 = 0 then 12 else 0 end as varchar(2)),2) +  
+                                                                  ':' + right('0' + cast(datepart(mi, dateval) as varchar(2)),2))
+      ,HourIntervalString = rtrim(cast(case when ((datepart(hh, dateval)) % 12) = 0 then 12 else ((datepart(hh, dateval)) % 12) end as varchar(2)) + case when datepart(hh, dateval) between 0 and 11 then 'AM' else 'PM' end +
+                            ' - ' +  cast(case when ((datepart(hh, dateval)+1) % 12) = 0 then 12 else ((datepart(hh, dateval)+1) % 12) end as varchar(2)) + case when (datepart(hh, dateval)+1) between 0 and 11 or (datepart(hh, dateval)+1)  = 24 then 'AM' else 'PM' end)
 from (
       SELECT dateadd(minute, i, '20000101') AS dateVal, i 
       FROM sequence
@@ -63,8 +62,8 @@ from (
 order by 
     TimeKey
 
--- Add an unknown time member 
-insert into DimTimeOfDay
-(TimeKey, HourOfDay24, HourOfDay12, AmPm, MinuteOfHour, HalfHour, HalfHourOfDay, 
- QuarterHour, QuarterHourOfDay, StringRepresentation24, StringRepresentation12, HourIntervalString) 
- select -1, 255, 255, 'NA', 255, 255, 255, 255, 255, 'NA', 'NA', 'NA'
+---- Add an unknown time member 
+--insert into DimTimeOfDay
+--(TimeKey, HourOfDay24, HourOfDay12, AmPm, MinuteOfHour, HalfHour, HalfHourOfDay, 
+-- QuarterHour, QuarterHourOfDay, StringRepresentation24, StringRepresentation12, HourIntervalString) 
+-- select -1, 255, 255, 'NA', 255, 255, 255, 255, 255, 'NA', 'NA', 'NA'
