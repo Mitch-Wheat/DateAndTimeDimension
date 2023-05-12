@@ -702,15 +702,18 @@ BEGIN
         SET HolidayDescription = dbo.AddHolidayDescription(HolidayDescription, 'Juneteenth Day', 'US'),
         IsHolidayUS = 1
     WHERE 
-        CalendarMonth = 6 AND DayOfMonth = 19 AND DayOfWeek BETWEEN 2 AND 6;
+        CalendarYear >= 2021 AND CalendarMonth = 6 AND DayOfMonth = 19 AND DayOfWeek BETWEEN 2 AND 6;
 		
     UPDATE dbo.DimDate
         SET HolidayDescription = dbo.AddHolidayDescription(HolidayDescription, 'Juneteenth Day', 'US'),
         IsHolidayUS = 1
     WHERE 
-        (CalendarMonth = 6 AND DayOfMonth = 18 AND DayOfWeek = 6)
-        OR
-        (CalendarMonth = 6 AND DayOfMonth = 20 AND DayOfWeek = 2)		
+		CalendarYear >= 2021 AND
+		(
+			(CalendarMonth = 6 AND DayOfMonth = 18 AND DayOfWeek = 6)
+			OR
+			(CalendarMonth = 6 AND DayOfMonth = 20 AND DayOfWeek = 2)		
+		)
 
     -- Independance Day: 4th of July
     UPDATE dbo.DimDate
