@@ -634,6 +634,8 @@ GO
 
 ------------------------------------------------------------------------------------------
 
+-- https://en.wikipedia.org/wiki/Federal_holidays_in_the_United_States
+
 CREATE OR ALTER PROCEDURE SetUSHolidays
 AS
 BEGIN
@@ -650,7 +652,7 @@ BEGIN
     --   Friday = 6
     --   Saturday = 7
 
-    -- New Years Day falling Mon to Fri is Common (above)
+    -- New Years Day falling Mon to Fri is set in Common Holidays (above)
 
     UPDATE d
     SET 
@@ -694,6 +696,21 @@ BEGIN
         GROUP BY
             CalendarYear
     );
+	
+    -- Juneteenth - Fixed 19th June
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddHolidayDescription(HolidayDescription, 'Juneteenth Day', 'US'),
+        IsHolidayUS = 1
+    WHERE 
+        CalendarMonth = 6 AND DayOfMonth = 19 AND DayOfWeek BETWEEN 2 AND 6;
+		
+    UPDATE dbo.DimDate
+        SET HolidayDescription = dbo.AddHolidayDescription(HolidayDescription, 'Juneteenth Day', 'US'),
+        IsHolidayUS = 1
+    WHERE 
+        (CalendarMonth = 6 AND DayOfMonth = 19 AND DayOfWeek = 6)
+        OR
+        (CalendarMonth = 6 AND DayOfMonth = 19 AND DayOfWeek = 2)		
 
     -- Independance Day: 4th of July
     UPDATE dbo.DimDate
